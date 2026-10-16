@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Control de Materiales</title>
+<style>
+:root{--bg:#f4f6f8;--card:#fff;--ink:#17212b;--muted:#64748b;--line:#dce3ea;--accent:#176b5b;--accent2:#e6f4ef;--danger:#a33232}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+header{background:#123d36;color:white;padding:22px 18px}header .wrap,main{max-width:1000px;margin:auto}header h1{margin:0;font-size:1.45rem}header p{margin:5px 0 0;color:#d7ebe5;font-size:.95rem}
+main{padding:18px;display:grid;grid-template-columns:1fr;gap:16px}.panel{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:0 2px 8px #142b3610}
+h2{font-size:1.12rem;margin:0 0 12px}.muted{color:var(--muted);font-size:.9rem}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.field{display:flex;flex-direction:column;gap:5px}.field.full{grid-column:1/-1}label{font-size:.88rem;font-weight:650}input,select,textarea{width:100%;border:1px solid #cbd5e1;border-radius:9px;padding:11px 12px;font:inherit;background:#fff;color:var(--ink)}input:focus,select:focus{outline:2px solid #8dc8b7;border-color:var(--accent)}
+button{border:0;border-radius:10px;padding:11px 15px;font:inherit;font-weight:700;cursor:pointer;background:var(--accent);color:#fff}button.secondary{background:#e8eef2;color:#21313a}button.danger{background:#fff0f0;color:var(--danger);padding:7px 10px}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.notice{padding:11px 12px;border-radius:10px;background:#fff7df;color:#715316;font-size:.88rem;margin:10px 0}.success{background:var(--accent2);color:#145346}.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:14px}.stat{background:#f0f5f4;padding:12px;border-radius:12px}.stat b{display:block;font-size:1.3rem}.stat span{font-size:.78rem;color:var(--muted)}
+.material{border:1px solid var(--line);border-radius:12px;padding:13px;margin-top:10px}.materialtop{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}.material h3{margin:0;font-size:1rem}.tag{display:inline-block;background:#edf3f2;color:#24574e;border-radius:999px;padding:3px 8px;font-size:.75rem;margin-top:5px}.material p{margin:7px 0;color:var(--muted);font-size:.88rem}.empty{padding:20px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:12px}
+#measureArea{display:none;border-top:1px solid var(--line);margin-top:14px;padding-top:14px}.result{font-size:1.15rem;font-weight:750;margin:12px 0}.small{font-size:.8rem;color:var(--muted)}footer{max-width:1000px;margin:0 auto;padding:0 18px 24px;color:var(--muted);font-size:.8rem}
+@media(min-width:780px){main{grid-template-columns:1.05fr .95fr;align-items:start}.panel.listpanel{grid-column:1/-1}.listgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.material{margin:0}.stats{grid-column:1/-1}}
+@media(max-width:480px){main{padding:12px}.panel{padding:14px}.grid{grid-template-columns:1fr}.field.full{grid-column:auto}.stats{grid-template-columns:1fr 1fr}.stats .stat:last-child{grid-column:1/-1}}
+</style>
+</head>
+<body>
+<header><div class="wrap"><h1>📦 Control de Materiales</h1><p>Inventario flexible · Medición configurable · Primera versión de prueba</p></div></header>
+<main>
+<section class="panel">
+<h2>Agregar un material</h2>
+<p class="muted">Define los datos de fábrica y el método de medición. Los campos cambian según el método elegido.</p>
+<form id="materialForm">
+<div class="grid">
+<div class="field"><label for="name">Nombre del material *</label><input id="name" required placeholder="Ej. Film transparente"></div>
+<div class="field"><label for="code">Código (opcional)</label><input id="code" placeholder="Ej. FILM-080"></div>
+<div class="field"><label for="method">Método de medición *</label><select id="method"><option value="coil">Bobina/rollo por diámetro</option><option value="length">Longitud conocida</option><option value="weight">Por peso</option><option value="count">Por unidades</option><option value="volume">Por volumen/capacidad</option><option value="custom">Fórmula personalizada (pendiente de configurar)</option></select></div>
+<div class="field"><label for="unit">Unidad de stock *</label><select id="unit"><option value="metros">Metros</option><option value="kg">Kilogramos</option><option value="unidades">Unidades</option><option value="litros">Litros</option><option value="m²">m²</option><option value="otro">Otra (anotar en notas)</option></select></div>
+<div class="field" id="micronField"><label for="micron">Micraje (µm)</label><input id="micron" type="number" min="0" step="any" placeholder="Ej. 80"></div>
+<div class="field" id="initialField"><label for="initial">Cantidad inicial de fábrica *</label><input id="initial" type="number" min="0" step="any" required placeholder="Ej. 630"></div>
+<div class="field" id="coreField"><label for="core">Diámetro exterior del cono (mm)</label><input id="core" type="number" min="0" step="any" placeholder="Medir directamente"></div>
+<div class="field" id="innerField"><label for="inner">Diámetro interior del cono (mm, opcional)</label><input id="inner" type="number" min="0" step="any" placeholder="Ej. 76"></div>
+<div class="field" id="wallField"><label for="wall">Grosor de pared del cono (mm, opcional)</label><input id="wall" type="number" min="0" step="any" placeholder="Solo si falta diámetro exterior"></div>
+<div class="field" id="fullField"><label for="fullDia">Diámetro exterior de bobina nueva (mm)</label><input id="fullDia" type="number" min="0" step="any" placeholder="Medida de fábrica"></div>
+<div class="field" id="weightField" style="display:none"><label for="fullWeight">Peso inicial (kg)</label><input id="fullWeight" type="number" min="0" step="any" placeholder="Peso bruto o neto, especificar"></div>
+<div class="field full"><label for="notes">Notas / instrucciones de medición</label><input id="notes" placeholder="Ej. medir desde el exterior del cono hasta el borde del film"></div>
+</div>
+<div class="notice" id="methodNote">Para estimar metros de film se necesita el diámetro exterior actual de la bobina, el diámetro exterior del cono y el espesor real del film.</div>
+<div class="actions"><button type="submit">Guardar material</button><button type="reset" class="secondary">Limpiar</button></div>
+</form>
+</section>
+<section class="panel">
+<h2>Medir un material</h2>
+<p class="muted">Selecciona un material guardado e introduce su medición actual.</p>
+<div class="field"><label for="measureSelect">Material</label><select id="measureSelect"><option value="">Primero agrega un material</option></select></div>
+<div id="measureArea">
+<div id="measureFields" class="grid"></div>
+<div class="actions"><button id="calcBtn" type="button">Calcular cantidad restante</button></div>
+<div id="measureResult" aria-live="polite"></div>
+</div>
+<div class="notice">Los resultados son estimaciones cuando dependen de dimensiones físicas. Comprueba la fórmula con una bobina conocida antes de usarla para ajustar el inventario.</div>
+</section>
+<section class="panel listpanel">
+<h2>Inventario</h2>
+<div class="stats"><div class="stat"><b id="totalMaterials">0</b><span>Materiales registrados</span></div><div class="stat"><b id="configuredCount">0</b><span>Con datos de medición</span></div><div class="stat"><b id="totalStock">—</b><span>Stock no sumable entre unidades distintas</span></div></div>
+<div id="materialsList" class="listgrid"><div class="empty">Todavía no hay materiales. Agrega el primero usando el formulario.</div></div>
+<div class="actions"><button type="button" class="secondary" id="exportBtn">Exportar respaldo JSON</button><button type="button" class="secondary" id="importBtn">Importar respaldo JSON</button><input id="importFile" type="file" accept=".json,application/json" hidden><button type="button" class="danger" id="clearBtn">Borrar todos los datos</button></div>
+<p class="small">Esta versión guarda los datos en este navegador y dispositivo. Todavía no sincroniza automáticamente entre celular y computador.</p>
+</section>
+</main>
+<footer>Prototipo inicial. Los datos quedan guardados localmente en este navegador. No uses los resultados como stock oficial hasta validar los parámetros y las mediciones.</footer>
+<script>
+const $=id=>document.getElementById(id);
+const STORE='controlMaterialesPrototype_v1';
+let materials=[];
+try{materials=JSON.parse(localStorage.getItem(STORE)||'[]')}catch(e){materials=[]}
+const methodNames={coil:'Bobina/rollo por diámetro',length:'Longitud conocida',weight:'Por peso',count:'Por unidades',volume:'Por volumen/capacidad',custom:'Fórmula personalizada'};
+function persist(){localStorage.setItem(STORE,JSON.stringify(materials));render()}
+function val(id){const x=$(id).value.trim();return x===''?null:Number(x)}
+function updateForm(){
+ const m=$('method').value, coil=m==='coil';
+ ['micronField','coreField','innerField','wallField','fullField'].forEach(id=>$(id).style.display=coil?'flex':'none');
+ $('weightField').style.display=m==='weight'?'flex':'none';
+ $('methodNote').textContent=({
+ coil:'Para estimar el largo de una bobina uniforme se usa la geometría del rollo. El micraje nominal puede diferir del espesor real; valida el cálculo con una bobina conocida.',
+ length:'Guarda la cantidad inicial y registra una cantidad actual medida directamente o el consumo realizado.',
+ weight:'Para convertir peso en longitud o unidades se necesita conocer el peso neto del material y su relación con la unidad de stock.',
+ count:'Este método controla cantidades discretas. Puedes registrar unidades iniciales y luego ajustar el saldo.',
+ volume:'Para convertir dimensiones a litros u otra unidad se debe definir la geometría y la unidad de entrada.',
+ custom:'Este prototipo permite registrar el método como pendiente; la ejecución segura de fórmulas personalizadas se añadirá en una etapa posterior.'
+ })[m];
+}
+$('method').addEventListener('change',updateForm);updateForm();
+$('materialForm').addEventListener('reset',()=>setTimeout(updateForm,0));
+$('materialForm').addEventListener('submit',e=>{
+ e.preventDefault();
+ const method=$('method').value, initial=val('initial');
+ if(initial===null||initial<0){alert('Ingresa una cantidad inicial válida.');return}
+ const item={id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),name:$('name').value.trim(),code:$('code').value.trim(),method,unit:$('unit').value,initial,stock:initial,micron:val('micron'),core:val('core'),inner:val('inner'),wall:val('wall'),fullDia:val('fullDia'),fullWeight:val('fullWeight'),notes:$('notes').value.trim(),created:new Date().toISOString(),history:[]};
+ if(!item.name){alert('Escribe el nombre del material.');return}
+ if(method==='coil'){
+   if(!item.micron||item.micron<=0){if(!confirm('No has ingresado un micraje válido. ¿Guardar el material sin calcular hasta completar los datos?'))return}
+   if(!(item.core>0)&&!(item.inner>0&&item.wall>0)){if(!confirm('Falta el diámetro exterior del cono (o diámetro interior y grosor de pared). ¿Guardar para completar después?'))return}
+ }
+ materials.unshift(item);persist();e.target.reset();updateForm();$('measureSelect').value=item.id;setupMeasure();alert('Material guardado en este dispositivo.');
+});
+function render(){
+ $('totalMaterials').textContent=materials.length;
+ $('configuredCount').textContent=materials.filter(m=>m.method!=='custom'&&(m.method!=='coil'||(m.micron>0&&getCore(m)>0))).length;
+ $('totalStock').textContent='Por material';
+ const sel=$('measureSelect'), old=sel.value;
+ sel.innerHTML=materials.length?'':'<option value="">Primero agrega un material</option>';
+ materials.forEach(m=>{const o=document.createElement('option');o.value=m.id;o.textContent=m.name+(m.code?' · '+m.code:'');sel.appendChild(o)});
+ if(materials.some(m=>m.id===old))sel.value=old;
+ const list=$('materialsList');
+ if(!materials.length){list.innerHTML='<div class="empty">Todavía no hay materiales. Agrega el primero usando el formulario.</div>'}
+ else{
+ list.innerHTML='';
+ materials.forEach(m=>{
+  const el=document.createElement('article');el.className='material';
+  const stock=m.stock==null?'Sin saldo calculado':`${fmt(m.stock)} ${m.unit}`;
+  el.innerHTML=`<div class="materialtop"><div><h3>${esc(m.name)}</h3><span class="tag">${esc(methodNames[m.method])}</span></div><button class="danger" data-del="${m.id}">Eliminar</button></div><p>${m.code?'Código: '+esc(m.code)+' · ':''}Stock registrado: <strong>${stock}</strong></p><p>Inicial: ${fmt(m.initial)} ${esc(m.unit)}${m.notes?' · '+esc(m.notes):''}</p><div class="actions"><button type="button" data-measure="${m.id}">Medir / actualizar</button><button type="button" class="secondary" data-add="${m.id}">Registrar entrada</button><button type="button" class="secondary" data-use="${m.id}">Registrar consumo</button></div>`;
+  list.appendChild(el);
+ });
+ }
+ list.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{const m=materials.find(x=>x.id===b.dataset.del);if(confirm(`¿Eliminar ${m.name} y su historial?`)){materials=materials.filter(x=>x.id!==m.id);persist()}});
+ list.querySelectorAll('[data-measure]').forEach(b=>b.onclick=()=>{$('measureSelect').value=b.dataset.measure;setupMeasure();$('measureArea').scrollIntoView({behavior:'smooth',block:'nearest'})});
+ list.querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>movement(b.dataset.add,1));
+ list.querySelectorAll('[data-use]').forEach(b=>b.onclick=()=>movement(b.dataset.use,-1));
+ setupMeasure();
+}
+function fmt(n){return Number(n).toLocaleString('es-CL',{maximumFractionDigits:3})}
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function getCore(m){return m.core>0?m.core:(m.inner>0&&m.wall>0?m.inner+2*m.wall:null)}
+$('measureSelect').addEventListener('change',setupMeasure);
+function setupMeasure(){
+ const m=materials.find(x=>x.id===$('measureSelect').value), area=$('measureArea'), fields=$('measureFields');
+ if(!m){area.style.display='none';return}area.style.display='block';$('measureResult').innerHTML='';fields.innerHTML='';
+ let specs=[];
+ if(m.method==='coil')specs=[['currentDia','Diámetro exterior actual de la bobina (mm)','number','Ej. 145'],['currentRim','Medida desde exterior del cono al borde del film (mm, opcional)','number','Si mediste esta distancia en vez del diámetro']];
+ else if(m.method==='length')specs=[['currentQty',`Cantidad actual en ${m.unit}`,'number','Cantidad medida']];
+ else if(m.method==='weight')specs=[['currentWeight','Peso neto actual (kg)','number','Peso sin cono/embalaje']];
+ else if(m.method==='count')specs=[['currentQty','Unidades actuales','number','Ej. 24']];
+ else if(m.method==='volume')specs=[['currentQty',`Volumen actual en ${m.unit}`,'number','Cantidad medida']];
+ else specs=[['currentQty',`Cantidad actual en ${m.unit}`,'number','Completar cuando se defina la fórmula']];
+ specs.forEach(([id,label,type,ph])=>{const d=document.createElement('div');d.className='field full';d.innerHTML=`<label for="${id}">${label}</label><input id="${id}" type="${type}" min="0" step="any" placeholder="${ph}">`;fields.appendChild(d)});
+ if(m.method==='coil'&&!(m.micron>0&&getCore(m)>0))$('measureResult').innerHTML='<div class="notice">Faltan parámetros de fábrica: micraje y/o diámetro exterior del cono. Edita el material o complétalo antes de calcular.</div>';
+}
+$('calcBtn').addEventListener('click',()=>{
+ const m=materials.find(x=>x.id===$('measureSelect').value);if(!m)return;
+ let qty=null, detail='';
+ if(m.method==='coil'){
+  const micron=m.micron,core=getCore(m),currentDia=val('currentDia'),currentRim=val('currentRim');
+  if(!(micron>0)||!(core>0)){alert('Completa micraje y diámetro exterior del cono en los datos del material.');return}
+  let outer=currentDia;
+  if(currentRim!==null){if(currentRim<0){alert('La medida no puede ser negativa.');return}outer=core+2*currentRim}
+  if(!(outer>0)||outer<core){alert('El diámetro exterior debe ser mayor o igual que el diámetro exterior del cono.');return}
+  const thickness=micron/1000; // micras -> mm
+  qty=Math.PI*(outer*outer-core*core)/(4*thickness);
+  detail='Estimación geométrica a partir de diámetros y micraje nominal. Compara con la cantidad de fábrica y valida en una bobina conocida.';
+  if(m.initial>0&&m.fullDia>core){
+   const expected=Math.PI*(m.fullDia*m.fullDia-core*core)/(4*thickness);
+   detail+=` Referencia geométrica para diámetro de fábrica: ${fmt(expected)} m; cantidad declarada de fábrica: ${fmt(m.initial)} ${m.unit}.`;
+  }
+ }else if(['length','count','volume'].includes(m.method)){
+  qty=val('currentQty');if(qty===null||qty<0){alert('Ingresa una cantidad actual válida.');return}
+ }else if(m.method==='weight'){
+  const w=val('currentWeight');if(w===null||w<0){alert('Ingresa el peso neto actual.');return}
+  if(m.fullWeight>0&&m.initial>0){qty=m.initial*(w/m.fullWeight);detail='Conversión proporcional basada en el peso inicial configurado; confirma que el peso registrado sea neto y proporcional.'}
+  else {detail='Peso registrado. Para convertirlo a la unidad de stock, configura un peso inicial neto y valida la relación.';qty=null}
+ }else{alert('Este método aún requiere configurar y validar una fórmula.');return}
+ let out=`<div class="panel" style="padding:13px;margin-top:12px;background:#f4fbf8"><div class="muted">Resultado de la medición</div>`;
+ if(qty!==null){
+  out+=`<div class="result">${fmt(qty)} ${esc(m.unit)}</div><div>Consumo estimado frente a cantidad inicial: ${fmt(Math.max(0,m.initial-qty))} ${esc(m.unit)}.</div><div class="small">El resultado aún no modifica el stock oficial. Confirma antes de guardar.</div>`;
+  out+=`<div class="actions"><button id="saveResult" type="button">Guardar como stock actual</button></div>`;
+ }else out+=`<div class="result">${fmt(val('currentWeight'))} kg registrados</div>`;
+ if(detail)out+=`<p class="small">${esc(detail)}</p>`;
+ out+='</div>';$('measureResult').innerHTML=out;
+ if(qty!==null)$('saveResult').onclick=()=>{if(!confirm(`Guardar ${fmt(qty)} ${m.unit} como stock actual de "${m.name}"?`))return;const previous=m.stock;m.stock=qty;m.history.unshift({date:new Date().toISOString(),type:'measurement',previous,quantity:qty,detail});persist();$('measureSelect').value=m.id;setupMeasure();alert('Stock actualizado en este dispositivo.')};
+});
+function movement(id,sign){
+ const m=materials.find(x=>x.id===id);if(!m)return;
+ const raw=prompt(`${sign>0?'Cantidad que ingresa':'Cantidad consumida'} (${m.unit}) para ${m.name}:`);if(raw===null)return;
+ const n=Number(raw.replace(',','.'));if(!Number.isFinite(n)||n<=0){alert('Ingresa una cantidad mayor que cero.');return}
+ const base=Number(m.stock??m.initial),next=base+sign*n;if(next<0){alert('El consumo supera el stock registrado.');return}
+ const note=prompt('Nota (opcional):','')||'';m.stock=next;m.history.unshift({date:new Date().toISOString(),type:sign>0?'entry':'consumption',quantity:n,previous:base,stock:next,note});persist();
+}
+$('exportBtn').onclick=()=>{const blob=new Blob([JSON.stringify({app:'Control de Materiales',version:1,exportedAt:new Date().toISOString(),materials},null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='respaldo-control-materiales.json';a.click();URL.revokeObjectURL(a.href)};
+$('importBtn').onclick=()=>$('importFile').click();
+$('importFile').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const data=JSON.parse(await f.text());const arr=Array.isArray(data)?data:data.materials;if(!Array.isArray(arr))throw new Error('Formato inválido');if(confirm(`Importar ${arr.length} materiales? Esto reemplazará los datos actuales.`)){materials=arr;persist();alert('Respaldo importado.')}}catch(err){alert('No se pudo importar el archivo JSON.')}e.target.value=''};
+$('clearBtn').onclick=()=>{if(confirm('¿Seguro que quieres borrar todos los materiales de este navegador? Exporta un respaldo antes si lo necesitas.')){materials=[];persist()}};
+render();
+</script>
+</body>
+</html>
